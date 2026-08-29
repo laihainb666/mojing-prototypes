@@ -10,6 +10,7 @@ function boot() {
   G.ctx = cvs.getContext('2d');
   initSurfaces();
   Mouse.bind(cvs);
+  loadProgress();
   startLevel(LEVELS[0]);
   G.state = 'title'; G.titleT = 0; G.titleIdx = -1;
   window.addEventListener('resize', fit);
@@ -27,13 +28,18 @@ function loop(ts) {
   const now = ts / 1000;
   let dt = Math.min(now - (lastTs || now - .016), .033);
   lastTs = now;
+  G.fps = lerp(G.fps || 60, 1 / Math.max(dt, .001), .06);
+  if (G.dbg.slow && G.state === 'play') dt *= .35;
   G.dt = dt; G.t += dt; G.frame++;
   if (G.freeze > 0) { G.freeze -= dt; dt = 0; }
   update(dt);
   render();
   In.clear();
+  Mouse.click = false;
 }
 function update(dt) {
+  if (In.hit('debug')) { G.dbg.open = !G.dbg.open; Sfx.play('select'); }
+  dbgPanelClicks();
   switch (G.state) {
     case 'title': {
       G.titleT += dt;
@@ -68,10 +74,11 @@ function update(dt) {
       break;
     }
     case 'play': {
+      /* 退出/静音在暂停与帮助时也生效（修复“回不去”） */
+      if (In.hit('dbgzone')) { G.state = 'map'; G.paused = false; G.helpOpen = false; Sfx.play('select'); toast('已退出关卡'); break; }
+      if (In.hit('mute')) toast(Sfx.toggleMute() ? '已静音' : '声音开启');
       if (In.hit('help')) G.helpOpen = !G.helpOpen;
       if (In.hit('pause')) G.paused = !G.paused;
-      if (In.hit('dbgzone')) { G.state = 'map'; Sfx.play('select'); toast('已退出关卡'); break; }
-      if (In.hit('mute')) toast(Sfx.toggleMute() ? '已静音' : '声音开启');
       if (G.helpOpen || G.paused) break;
       if (G.wipe) { G.wipe.t += dt; if (G.wipe.t > G.wipe.dur) G.wipe = null; }
       G.stats.t += dt;
@@ -116,8 +123,83 @@ function mapUnlocked(i) {
   if (i === 0) return true;
   return !!G.progress[LEVELS[i - 1].id];
 }
+/* ---------- 存档（localStorage） ---------- */
+function saveProgress() {
+  try { localStorage.setItem('mojing2_save', JSON.stringify({ progress: G.progress, best: G.bestScore || 0 })); } catch (e) {}
+}
+function loadProgress() {
+  try {
+    const s = JSON.parse(localStorage.getItem('mojing2_save') || 'null');
+    if (s) { G.progress = s.progress || {}; G.bestScore = s.best || 0; }
+  } catch (e) {}
+}
+function wipeSave() {
+  try { localStorage.removeItem('mojing2_save'); } catch (e) {}
+  G.progress = {}; G.bestScore = 0;
+  toast('存档已清空');
+}
+/* ---------- 调试面板 ---------- */
+function dbgRows() {
+  const d = G.dbg;
+  const tg = (label, key) => ({ label: label + '：' + (d[key] ? '开' : '关'), on: d[key], act: () => { d[key] = !d[key]; } });
+  const rows = [
+    tg('无敌', 'inv'), tg('一击必杀', 'ohk'), tg('无限墨量', 'ink'),
+    tg('显示碰撞盒', 'boxes'), tg('慢动作', 'slow'),
+  ];
+  const lv = LEVELS.findIndex(l => l.id === (G.level && G.level.id));
+  if (G.state === 'play' && G.level && !G.level.endless) {
+    rows.push({ label: '◆ 直接过关', act: () => clearLevel() });
+    if (lv > 0) rows.push({ label: '◆ 上一关', act: () => startLevel(LEVELS[lv - 1]) });
+    if (lv < LEVELS.length - 1) rows.push({ label: '◆ 下一关', act: () => startLevel(LEVELS[lv + 1]) });
+    if (G.boss && G.bossOn) rows.push({ label: '◆ Boss 秒杀', act: () => { G.boss.hp = 1; hitBoss(5, {}); } });
+  } else if (G.state === 'map') {
+    rows.push({ label: '◆ 解锁全部关卡', act: () => { LEVELS.forEach(l => G.progress[l.id] = true); saveProgress(); } });
+  }
+  rows.push({ label: '◆ 回选关地图', act: () => { G.state = 'map'; G.paused = false; G.helpOpen = false; } });
+  rows.push({ label: '◆ 清空存档', act: () => wipeSave() });
+  return rows;
+}
+function dbgPanelClicks() {
+  if (!G.dbg.open || !Mouse.click) return;
+  const rows = dbgRows();
+  const x0 = W - 258, y0 = 96, rh = 30;
+  for (let i = 0; i < rows.length; i++) {
+    const ry = y0 + 46 + i * rh;
+    if (Mouse.x >= x0 + 12 && Mouse.x <= x0 + 234 && Mouse.y >= ry && Mouse.y <= ry + rh - 6) {
+      rows[i].act(); Sfx.play('select');
+      return;
+    }
+  }
+}
+function drawDbgPanel(ctx) {
+  if (!G.dbg.open) return;
+  const rows = dbgRows();
+  const x0 = W - 258, y0 = 96, w2 = 246, rh = 30;
+  ctx.save();
+  ctx.fillStyle = 'rgba(10,9,14,.88)';
+  roundRect(ctx, x0, y0, w2, 52 + rows.length * rh + 14, 10); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,210,62,.55)'; ctx.lineWidth = 1.5;
+  roundRect(ctx, x0, y0, w2, 52 + rows.length * rh + 14, 10); ctx.stroke();
+  setFont(ctx, 16, true);
+  ctx.fillStyle = '#ffd23e';
+  ctx.fillText('调试面板 · ' + Math.round(G.fps) + ' FPS', x0 + 14, y0 + 26);
+  setFont(ctx, 11, false);
+  ctx.fillStyle = 'rgba(245,241,230,.5)';
+  ctx.fillText('` 收起 · G.level=' + (G.level ? G.level.id : '-'), x0 + 14, y0 + 44);
+  for (let i = 0; i < rows.length; i++) {
+    const ry = y0 + 46 + i * rh;
+    const hov = Mouse.inside && Mouse.x >= x0 + 12 && Mouse.x <= x0 + 234 && Mouse.y >= ry && Mouse.y <= ry + rh - 6;
+    ctx.fillStyle = rows[i].on ? 'rgba(159,216,168,.2)' : hov ? 'rgba(255,210,62,.12)' : 'rgba(245,241,230,.05)';
+    roundRect(ctx, x0 + 12, ry, 222, rh - 6, 6); ctx.fill();
+    setFont(ctx, 14, rows[i].on);
+    ctx.fillStyle = rows[i].on ? '#9fd8a8' : hov ? '#ffd23e' : 'rgba(245,241,230,.8)';
+    ctx.fillText(rows[i].label, x0 + 22, ry + 17);
+  }
+  ctx.restore();
+}
 function endEndless() {
   G.endScore = Math.floor(G.stats.t) + G.stats.kills * 10;
+  if (G.endScore > (G.bestScore || 0)) { G.bestScore = G.endScore; saveProgress(); }
   G.state = 'exscore';
   Sfx.play('boom');
 }
@@ -220,7 +302,7 @@ function renderMap(ctx) {
     /* 核心创意一行 */
     setFont(ctx, 13.5, false);
     ctx.fillStyle = unlocked ? 'rgba(255,210,62,.8)' : 'rgba(245,241,230,.28)';
-    const tip = isEndless ? '通关任意 5 关解锁' : def.tip;
+    const tip = isEndless ? (G.bestScore ? '最高分 ' + G.bestScore + ' · 通关任意 5 关解锁' : '通关任意 5 关解锁') : def.tip;
     wrapText(ctx, tip, x + 18, y + 84, cw - 36, 18);
     if (cleared) { setFont(ctx, 13, true); ctx.fillStyle = '#9fd8a8'; ctx.fillText('✔ 已通关', x + 18, y + chh - 16); }
     else if (!unlocked) { setFont(ctx, 16, true); ctx.fillStyle = 'rgba(245,241,230,.35)'; ctx.fillText('🔒', x + 18, y + chh - 16); }
@@ -384,9 +466,9 @@ function drawHUD(ctx) {
     ctx.fillText(G.level.endless ? '回廊合上了……' : '墨迹未干……', W / 2, H / 2 - 10);
     ctx.textAlign = 'left';
   }
-  if (G.paused) drawMsg(ctx, '暂 停', 'P 继续 · Q/M 离开关卡 · H 帮助');
+  if (G.paused) drawMsg(ctx, '暂 停', 'P 继续 · M 离开关卡 · H 帮助 · ` 调试');
   if (G.helpOpen) drawHelp2(ctx);
-  if (In.down('q')) { /* 按住 Q 退出 */ }
+  drawDbgPanel(ctx);
 }
 function drawMsg(ctx, big, small) {
   ctx.fillStyle = 'rgba(12,10,16,.6)';
@@ -423,6 +505,7 @@ function drawHelp2(ctx) {
     ['图章', 'K 盖章召唤画灵（25 墨量）'],
     ['荧光笔', '画光线照明 · K 脉冲照亮全图'],
     ['其他', ''],
+    ['` / F2', '调试面板（无敌 · 秒杀 · 无限墨 · 碰撞盒 · 慢动作 · 跳关）'],
     ['H 关闭 · P 暂停 · M 离开关卡 · 0 静音', ''],
   ];
   let y = 92;
