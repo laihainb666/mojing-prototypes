@@ -54,6 +54,7 @@ const In = (() => {
     Enter: 'start', h: 'help', H: 'help', p: 'pause', P: 'pause', Escape: 'pause',
     m: 'dbgzone', M: 'dbgzone', b: 'dbgboss', B: 'dbgboss', l: 'dbgsoul', L: 'dbgsoul',
     r: 'restart', R: 'restart', '0': 'mute',
+    '`': 'debug', 'F2': 'debug',
     '1': 'page1', '2': 'page2', '3': 'page3', '4': 'page4', '5': 'page5', '6': 'page6', '7': 'page7'
   };
   window.addEventListener('keydown', ev => {
@@ -75,7 +76,7 @@ const In = (() => {
 
 /* ---------- 鼠标（画笔模式） ---------- */
 const Mouse = {
-  x: 0, y: 0, wx: 0, wy: 0, inside: false, down: false,
+  x: 0, y: 0, wx: 0, wy: 0, inside: false, down: false, click: false,
   bind(cvs) {
     const toLocal = ev => {
       const r = cvs.getBoundingClientRect();
@@ -83,7 +84,7 @@ const Mouse = {
     };
     cvs.addEventListener('mousemove', ev => { const p = toLocal(ev); Mouse.x = p.x; Mouse.y = p.y; Mouse.inside = true; });
     cvs.addEventListener('mouseleave', () => { Mouse.inside = false; });
-    cvs.addEventListener('mousedown', ev => { if (ev.button === 0) { Mouse.down = true; const p = toLocal(ev); Mouse.x = p.x; Mouse.y = p.y; } });
+    cvs.addEventListener('mousedown', ev => { if (ev.button === 0) { Mouse.down = true; Mouse.click = true; const p = toLocal(ev); Mouse.x = p.x; Mouse.y = p.y; } });
     window.addEventListener('mouseup', ev => { if (ev.button === 0) Mouse.down = false; });
     cvs.addEventListener('contextmenu', ev => ev.preventDefault());
   },
@@ -123,6 +124,8 @@ const G = {
   progress: {},           /* { '1-1': true } 已通关 */
   endless: null,          /* 无尽回廊状态 */
   promptStr: '',
+  dbg: { open: false, inv: false, ohk: false, ink: false, boxes: false, slow: false },
+  fps: 60, bestScore: 0,
   cvs: null, ctx: null,
 };
 
