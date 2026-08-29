@@ -42,6 +42,27 @@ function renderScene(ctx) {
   stylePost(ctx);
   /* 黑暗（电路失明 / 空白之心） */
   if (G.dark > .01) renderDarkness(ctx);
+  /* 调试：碰撞盒 */
+  if (G.dbg && G.dbg.boxes && G.state === 'play') renderDebugBoxes(ctx, cam);
+}
+function renderDebugBoxes(ctx, cam) {
+  ctx.save();
+  ctx.translate(-cam.x, -cam.y);
+  ctx.lineWidth = 1.5;
+  for (const pl of solidList()) {
+    ctx.strokeStyle = pl.kind === 'dbx' ? 'rgba(255,210,62,.9)' : 'rgba(120,255,140,.55)';
+    ctx.strokeRect(pl.x, pl.y, pl.w, pl.h);
+  }
+  ctx.strokeStyle = 'rgba(255,90,90,.9)';
+  for (const e of G.enemies) { if (!e.dead) ctx.strokeRect(e.x - e.w / 2, e.y - e.h, e.w, e.h); }
+  if (G.player) {
+    ctx.strokeStyle = 'rgba(120,200,255,.95)';
+    const b = pbox(G.player);
+    ctx.strokeRect(b.x, b.y, b.w, b.h);
+  }
+  ctx.strokeStyle = 'rgba(255,255,120,.8)';
+  for (const pr of G.projs) ctx.strokeRect(pr.x - 8, pr.y - 8, 16, 16);
+  ctx.restore();
 }
 function renderDarkness(ctx) {
   const d = darkCtx;
