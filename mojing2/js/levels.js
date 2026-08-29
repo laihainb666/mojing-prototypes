@@ -42,13 +42,16 @@ const LEVELS = [
       /* 龙脊：波动的脊背平台 */
       for (let i = 0; i < 8; i++) pl(560 + i * 180, 500, 130, 26, { spine: true, baseY: 500, ph: i * .9 });
       pl(2140, 500, 160, 26, { spine: true, baseY: 500, ph: 8 * .9 });
+      /* 龙背鞍部：翻转前的休息点与存档 */
+      pl(1540, 430, 150, 24);
       /* 翻转后的“天花板地面” */
       wall(1500, 60, 1400, 70);
-      en('floater', 900, 380); en('floater', 1300, 350); en('walker', 1700, 474, { ceiling: true });
+      en('floater', 900, 380); en('floater', 1300, 350);
       inter({ type: 'exit', x: 2700, y: 130, label: '出口 · 天花板' });
       inter({ type: 'checkpoint', x: 260, y: GB });
+      inter({ type: 'checkpoint', x: 1610, y: 430 });
       hint(700, 380, '龙脊在呼吸 —— 踩稳了');
-      hint(1420, 420, '前方天地即将 倒 转');
+      hint(1470, 360, '前方天地即将 倒 转');
     },
     mech: { spine: true, gravityAt: 1620, inkRegen: 3 },
   },
@@ -608,7 +611,7 @@ function updateMechanics(dt) {
     G.liquid = { x: 1900, y: GB - 20, w: 800, h: 130 };
     G.platforms.push({ x: 1900, y: GB - 20, w: 800, h: 130, kind: 'liquid', col: '#b3542e' });
     const ex = G.inter.find(i => i.type === 'exit');
-    if (ex) { ex.locked = false; ex.y = 380; }
+    if (ex) { ex.locked = false; ex.y = 566; } /* 沉到液面处，游泳可及 */
     /* 崩塌后右侧地面消失 */
     for (const pl of G.platforms) if (pl.kind === 'ground' && pl.x >= 1900) pl.dead = true;
     G.platforms = G.platforms.filter(pl => !pl.dead);
@@ -678,7 +681,7 @@ function updateMechanics(dt) {
   /* 出口判定 */
   for (const it of G.inter) {
     if (it.type === 'exit' && !it.locked) {
-      if (dist(p.x, p.y - 40, it.x, it.y - 52) < 58) { clearLevel(); return; }
+      if (dist(p.x, p.y - 40, it.x, it.y - 52) < 76) { clearLevel(); return; }
     }
     if (it.type === 'spark' && !it.taken) {
       if (dist(p.x, p.y - 30, it.x, it.y) < 46) {
