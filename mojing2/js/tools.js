@@ -155,7 +155,8 @@ function updateDrawing(dt) {
             pl.dead = true;
             G.platforms = G.platforms.filter(p2 => p2 !== pl);
             burst(pl.x + pl.w / 2, pl.y + pl.h / 2, 18, { col: '#a24a2c', type: 'chip', s0: 4, s1: 9, sp1: 300, g: 600 });
-            Sfx.play('scrape'); toast('厚涂被刮穿了');
+            Sfx.play('scrape'); toast('覆盖层被刮穿了');
+            if (pl.reveal) spawnReveal(pl);
           }
         } else if (pl.kind === 'sink' && pl.h > 22) {
           pl.y += dt * 30; pl.h -= dt * 26;
