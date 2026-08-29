@@ -9,7 +9,7 @@ const GB = 620;
 function gr(x, w, o) { const p = Object.assign({ x, y: GB, w, h: 160, kind: 'ground' }, o || {}); G.platforms.push(p); return p; }
 function pl(x, y, w, h, o) { const p = Object.assign({ x, y, w, h: h || 22, kind: 'plat' }, o || {}); G.platforms.push(p); return p; }
 function wall(x, y, w, h, o) { const p = Object.assign({ x, y, w, h, kind: 'wall' }, o || {}); G.platforms.push(p); return p; }
-function gwall(x, y, w, h, gs, hp) { G.platforms.push({ x, y, w, h, kind: 'gwall', gs, hp, hpMax: hp, seed: rnd(0, 999) }); }
+function gwall(x, y, w, h, gs, hp, o) { G.platforms.push(Object.assign({ x, y, w, h, kind: 'gwall', gs, hp, hpMax: hp, seed: rnd(0, 999) }, o || {})); }
 function en(type, x, y, o) { G.enemies.push(makeEnemy(Object.assign({ type, x, y, zs: G.level ? G.level.style : 'ink' }, o || {}))); }
 function inter(o) { G.inter.push(o); }
 function hint(x, y, str) { G.hints.push({ x, y, str }); }
@@ -110,6 +110,26 @@ const LEVELS = [
     mech: { collapseAt: 20, inkRegen: 3 },
   },
   {
+    id: '5-35', name: '刻板翻转', ch: '第五章 · 版画', style: 'print', w: 2800,
+    loadout: ['pencil', 'knife', 'eraser', 'brush'],
+    tip: '核心创意：印版上刻线过渊 —— 拉杆翻面，滚筒压平你刻的一切',
+    build() {
+      gr(0, 620, { edible: false });
+      gr(1350, 330, { edible: false });          /* 印版中台（拉杆） */
+      gr(2350, 450, { edible: false });
+      wall(620, 40, 1060, 90);                    /* 天花板印版（翻面后的地面） */
+      wall(2350, 40, 270, 90);
+      inter({ type: 'lever', x: 1420, y: GB, used: false });
+      en('walker', 300, GB);
+      inter({ type: 'exit', x: 2620, y: 130, label: '出口 · 印版背面' });
+      inter({ type: 'checkpoint', x: 280, y: GB });
+      hint(240, GB - 190, '第一道渊：用铅笔画线刻过去（刻痕是永久的）');
+      hint(1330, GB - 130, 'E — 拉动拉杆：翻面');
+      hint(2200, 240, '滚筒会压平你刻下的一切 —— 看准再落笔');
+    },
+    mech: { roller: true, inkRegen: 3.5 },
+  },
+  {
     id: '6-41', name: '像素故障', ch: '第六章 · 像素', style: 'pixel', forcePixel: true, w: 2500,
     loadout: ['marker', 'pencil', 'scissors', 'highlight'],
     tip: '核心创意：标记缺失像素补路 —— 中途世界变回合制',
@@ -126,23 +146,6 @@ const LEVELS = [
       hint(1420, 320, '前方数据错乱……');
     },
     mech: { turnAt: 1720, inkRegen: 3 },
-  },
-  {
-    id: '10-64', name: '电路刻印', ch: '第十章 · 版画×像素', style: 'print', forcePixel: true, w: 2700,
-    loadout: ['pencil', 'highlight', 'eraser', 'knife'],
-    tip: '核心创意：用铅笔画电路通电 —— 黑暗中靠荧光笔前行',
-    build() {
-      gr(0, 2700, { edible: false });
-      pl(600, 460, 130, 20); pl(1250, 440, 130, 20); pl(1900, 460, 130, 20);
-      inter({ type: 'node', x: 500, y: GB - 4, node: 'A' });
-      inter({ type: 'node', x: 2100, y: GB - 4, node: 'B' });
-      en('walker', 1000, GB); en('binder', 1500, GB); en('walker', 1800, GB);
-      inter({ type: 'exit', x: 2450, y: GB, locked: true, lockHint: '需连通 A → B 电路' });
-      inter({ type: 'checkpoint', x: 280, y: GB });
-      hint(420, GB - 170, '用 铅笔（按住左键）把电路 从 A 画到 B');
-      hint(2050, GB - 170, 'B 节点');
-    },
-    mech: { circuit: true, blackoutAt: 15, inkRegen: 3.5 },
   },
   {
     id: '7-46', name: '折纸迷宫', ch: '第七章 · 剪纸', style: 'paper', w: 2700,
@@ -165,6 +168,74 @@ const LEVELS = [
       hint(770, GB - 300, 'E 折叠纸墙 · 剪刀 K 可剪断红色封印');
     },
     mech: { foldAt: 30, inkRegen: 3 },
+  },
+  {
+    id: '8-50', name: '雾雨双重', ch: '第八章 · 水墨×水彩', style: 'ink', w: 2900,
+    loadout: ['brush', 'sponge', 'pencil', 'marker'],
+    tip: '核心创意：左岸晕染缠足，右岸雨水溶解 —— 中央泥浆又滑又重',
+    build() {
+      gr(0, 2900, { edible: false });
+      pl(1750, 470, 130, 20, { sol: true }); pl(1960, 430, 130, 20, { sol: true }); pl(2170, 470, 130, 20, { sol: true });
+      en('floater', 600, 420, { zs: 'ink' }); en('floater', 850, 380, { zs: 'ink' });
+      en('binder', 1900, 430, { zs: 'water' }); en('binder', 2250, 470, { zs: 'water' }); en('walker', 2500, GB, { zs: 'water' });
+      inter({ type: 'exit', x: 2740, y: GB });
+      inter({ type: 'checkpoint', x: 280, y: GB });
+      hint(320, GB - 200, '左岸 · 墨泽 —— 墨渍会缠住脚步（海绵 K 可吸干）');
+      hint(1220, GB - 200, '中央 · 泥浆（又滑又重）');
+      hint(1650, 360, '右岸 · 彩雨 —— 水彩台会被雨溶解');
+    },
+    mech: { dual: true, mud: { x0: 1150, x1: 1550 }, inkRegen: 3.5 },
+  },
+  {
+    id: '9-57', name: '画室惊魂', ch: '第九章 · 素描×油画', style: 'oil', w: 2600,
+    loadout: ['knife', 'eraser', 'pencil', 'marker'],
+    tip: '核心创意：刮开厚涂覆盖层 —— 藏在下面的草图会活过来',
+    build() {
+      gr(0, 2600, { edible: false });
+      pl(520, 470, 140, 20); pl(1080, 450, 140, 20); pl(1620, 470, 140, 20);
+      gwall(760, GB - 240, 56, 240, 'oil', 3, { reveal: { type: 'binder', x: 830, zs: 'sketch' } });
+      gwall(1320, GB - 240, 56, 240, 'oil', 3, { reveal: { type: 'walker', x: 1390, zs: 'sketch' } });
+      gwall(1880, GB - 240, 56, 240, 'oil', 3, { reveal: { type: 'binder', x: 1950, zs: 'sketch' } });
+      en('armored', 1050, GB, { zs: 'oil' });
+      inter({ type: 'exit', x: 2440, y: GB });
+      inter({ type: 'checkpoint', x: 280, y: GB });
+      hint(660, GB - 300, '用刮刀（按住左键抵住）刮开覆盖层');
+      hint(1240, GB - 300, '覆盖层下面……有什么在动');
+      hint(2160, GB - 300, '画架上的画开始颤动……');
+    },
+    mech: { surpriseAt: 26, inkRegen: 3 },
+  },
+  {
+    id: '10-64', name: '电路刻印', ch: '第十章 · 版画×像素', style: 'print', forcePixel: true, w: 2700,
+    loadout: ['pencil', 'highlight', 'eraser', 'knife'],
+    tip: '核心创意：用铅笔画电路通电 —— 黑暗中靠荧光笔前行',
+    build() {
+      gr(0, 2700, { edible: false });
+      pl(600, 460, 130, 20); pl(1250, 440, 130, 20); pl(1900, 460, 130, 20);
+      inter({ type: 'node', x: 500, y: GB - 4, node: 'A' });
+      inter({ type: 'node', x: 2100, y: GB - 4, node: 'B' });
+      en('walker', 1000, GB); en('binder', 1500, GB); en('walker', 1800, GB);
+      inter({ type: 'exit', x: 2450, y: GB, locked: true, lockHint: '需连通 A → B 电路' });
+      inter({ type: 'checkpoint', x: 280, y: GB });
+      hint(420, GB - 170, '用 铅笔（按住左键）把电路 从 A 画到 B');
+      hint(2050, GB - 170, 'B 节点');
+    },
+    mech: { circuit: true, blackoutAt: 15, inkRegen: 3.5 },
+  },
+  {
+    id: '11-70', name: '万具回廊', ch: '第十一章 · 万象拼贴', style: 'paper', w: 3600,
+    loadout: ['brush', 'scissors', 'eraser', 'highlight'],
+    tip: '核心创意：每走一段，画风与工具随机重铸 —— 尾声万象拼贴',
+    build() {
+      gr(0, 700, { edible: false }); gr(820, 500); gr(1500, 400); gr(2050, 600); gr(2800, 800, { edible: false });
+      pl(1000, 470, 140, 20); pl(1620, 440, 130, 20); pl(2250, 460, 140, 20); pl(2900, 430, 140, 20);
+      en('flyer', 900, 380); en('walker', 1600, GB); en('armored', 2300, GB); en('flyer', 2600, 340); en('tele', 2450, GB - 140);
+      inter({ type: 'exit', x: 3420, y: GB });
+      inter({ type: 'checkpoint', x: 280, y: GB });
+      hint(420, GB - 200, '每走一段 —— 画风与携带的工具都会随机重铸');
+      hint(2760, 300, '回廊深处：万象拼贴');
+    },
+    mech: { styleWalk: 460, collageAt: 2600, inkRegen: 4 },
   },
   {
     id: '12-75', name: '空白之心', ch: '第十二章 · 纯白', style: 'blank', w: 2500,
@@ -245,6 +316,9 @@ function startLevel(def) {
   G.tools = def.loadout.slice(); G.toolIdx = 0;
   G.ink = 100; G.hpMax = 100;
   G.grav = 1; G.mirror = false; G.dark = def.mech.dark || 0; G.turn = null; G.liquid = null;
+  G.mud = def.mech.mud || null;
+  G.roller = null; G.collage = false; G.pixMix = 0;
+  G.walkDist = 0; G.lastWalkX = null;
   G.forcePixel = !!def.forcePixel;
   G.mechT = 0; G.mechFired = {}; G.clearT = 0;
   G.pixMix = 0;
@@ -292,8 +366,28 @@ function checkCircuit(s) {
     }
   }
 }
-function onSealCut(it) {
-  for (const pl of G.platforms) {
+/* 5-35：拉杆 → 印版翻面 + 滚筒启动 */
+function onLeverPulled(it) {
+  if (G.grav === 1) {
+    G.grav = -1;
+    G.player.vy = -200;
+    G.player.iframe = 1;
+    G.flashT = .35; addShake(10); Sfx.play('roar');
+    toast('印版翻面！滚筒启动 —— 到背面重新刻线！');
+  }
+  G.roller = { x: G.worldW - 120, dir: -1, w: 190, h: 120, y: 130, stopX: 640, done: false };
+  burst(G.player.x, G.player.y - 30, 16, { col: '#17171c', type: 'chip', s0: 3, s1: 8, sp1: 280, g: 300 });
+}
+/* 9-57：厚涂覆盖层被刮开后，露出草图敌人 */
+function spawnReveal(pl) {
+  if (!pl.reveal) return;
+  const e = makeEnemy({ type: pl.reveal.type, zone: -1, x: pl.reveal.x, y: pl.reveal.y || GB - 4, zs: pl.reveal.zs || 'sketch' });
+  G.enemies.push(e);
+  addText(e.x, e.y - 70, '草图活了!', '#e8e4da');
+  burst(e.x, e.y - 30, 14, { col: '#e8e4da', type: 'rect', s0: 3, s1: 8, sp1: 260, g: 300 });
+  Sfx.play('roar');
+}
+function onSealCut(it) {  for (const pl of G.platforms) {
     if (pl.sealWall) {
       pl.dead = true;
       burst(pl.x + pl.w / 2, pl.y + pl.h / 2, 18, { col: '#fdf6e8', type: 'petal', s0: 4, s1: 9, sp1: 260, g: 350, drag: 2 });
@@ -326,6 +420,80 @@ function updateMechanics(dt) {
 
   /* 龙脊呼吸 */
   if (m.spine) for (const pl of G.platforms) if (pl.spine) pl.y = pl.baseY + Math.sin(G.mechT * 1.3 + pl.ph) * 26;
+
+  /* 印刷滚筒：压平笔迹 */
+  if (G.roller && !G.roller.done) {
+    const R = G.roller;
+    R.x += R.dir * 250 * dt;
+    for (const s of G.strokes) {
+      if (!s.dead && s.cx > R.x - 30 && s.cx < R.x + R.w + 30 && s.cy > R.y - 50 && s.cy < R.y + R.h + 50) {
+        removeStroke(s);
+        addText(s.cx, s.cy - 14, '被压平', '#f0e9d8');
+      }
+    }
+    G.strokes = G.strokes.filter(s => !s.dead);
+    if (p && !p.dead && aabb({ x: R.x, y: R.y, w: R.w, h: R.h }, pbox(p))) damagePlayer(14, R.x);
+    if (chance(.3)) spawnPart({ x: R.x + rnd(0, R.w), y: R.y + R.h, vx: rnd(-30, 30), vy: rnd(20, 60), life: .6, size: rnd(2, 5), col: 'rgba(240,233,216,.7)' });
+    addShake(.5);
+    if (R.dir < 0 && R.x <= R.stopX) { R.done = true; toast('滚筒停在了印版尽头'); Sfx.play('boom'); }
+  }
+
+  /* 雾雨双重：左岸墨泽 / 右岸彩雨 */
+  if (m.dual) {
+    if (chance(.05)) addWash(rnd(160, 1000), GB - rnd(4, 10), rnd(30, 55), '#26252b');
+    if (p.x > 950 && chance(.55)) spawnPart({ x: rnd(Math.max(p.x - 640, 1250), p.x + 640), y: G.cam.y - 10, vx: rnd(-20, -6), vy: rnd(330, 430), life: 2, size: rnd(1, 2.4), col: 'rgba(110,150,170,.55)', type: 'line' });
+    for (const pl of G.platforms) {
+      if (pl.sol && !pl.dead) {
+        pl.x += 2.4 * dt; pl.w -= 4.8 * dt;
+        if (pl.w <= 14) { pl.dead = true; burst(pl.x, pl.y, 10, { col: '#9fc3b8', s0: 3, s1: 7, sp1: 160, g: 300 }); }
+      }
+    }
+    G.platforms = G.platforms.filter(pl => !pl.dead);
+    for (const w of G.washes) {
+      if (w.col === '#26252b' && Math.abs(p.x - w.x) < w.r + 14 && Math.abs(p.y - w.y) < 34) p.slowT = Math.max(p.slowT || 0, .15);
+    }
+  }
+
+  /* 11-70：行走重铸（画风 + 工具） */
+  if (m.styleWalk) {
+    if (G.lastWalkX == null) G.lastWalkX = p.x;
+    G.walkDist += Math.abs(p.x - G.lastWalkX);
+    G.lastWalkX = p.x;
+    if (G.walkDist >= m.styleWalk) {
+      G.walkDist = 0;
+      const styles = ['ink', 'water', 'sketch', 'oil', 'print', 'pixel', 'paper'];
+      const ns = styles.filter(s => s !== G.level.style)[rndi(0, 5)];
+      G.level.style = ns; G.zone = { style: ns };
+      G.forcePixel = ns === 'pixel';
+      const pool = TOOL_ORDER.slice();
+      G.tools = [];
+      for (let i = 0; i < 4; i++) G.tools.push(pool.splice(rndi(0, pool.length - 1), 1)[0]);
+      G.toolIdx = 0;
+      Sfx.setMood(ns); Sfx.play('switch');
+      for (const d of G.decos.far) d.col = shade(getStyle(ns).pal.far, rndi(-14, 14));
+      toast('回廊重铸 · ' + getStyle(ns).zh + '之境（工具已更换）');
+      en(['walker', 'floater', 'flyer'][rndi(0, 2)], clamp(p.x + rnd(-480, 480), 400, G.worldW - 320), GB - 4, { zs: ns });
+    }
+  }
+  if (G.collage) G.pixMix = .35 + .25 * Math.sin(G.t * 1.6);
+
+  /* 9-57：画室惊魂 */
+  if (m.surpriseAt && !G.mechFired.surprise && G.mechT > m.surpriseAt) {
+    G.mechFired.surprise = true;
+    let n = 0;
+    for (const pl of G.platforms) {
+      if (pl.kind === 'gwall' && pl.reveal && !pl.dead) {
+        pl.dead = true;
+        burst(pl.x + pl.w / 2, pl.y + pl.h / 2, 16, { col: '#a24a2c', type: 'chip', s0: 4, s1: 9, sp1: 300, g: 500 });
+        spawnReveal(pl);
+        n++;
+      }
+    }
+    G.platforms = G.platforms.filter(pl => !pl.dead);
+    if (n) { en('walker', 1200, GB, { zs: 'sketch' }); en('walker', 2100, GB, { zs: 'sketch' }); }
+    toast('画室里的画全部活了！');
+    Sfx.play('roar'); addShake(10); G.flashT = .4;
+  }
 
   /* 承重厚涂：站上去会下陷崩塌，4 秒后重构 */
   if (!G.sinkRespawn) G.sinkRespawn = [];
@@ -538,6 +706,19 @@ function updateMechanics(dt) {
       for (const pl of G.platforms) if (pl.morph && Math.abs(pl.ax - (it.x + 70)) < 90) pl.tx = pl.tx === 1 ? 0 : 1;
       Sfx.play('fold');
     }
+    if (it.type === 'lever' && !it.used && In.hit('interact') && Math.abs(p.x - it.x) < 120 && Math.abs(p.y - it.y) < 140) {
+      it.used = true;
+      onLeverPulled(it);
+    }
+  }
+  /* 11-70：万象拼贴 */
+  if (m.collageAt && !G.mechFired.collage && p.x > m.collageAt) {
+    G.mechFired.collage = true;
+    G.collage = true;
+    toast('万象拼贴 —— 所有画风同时显现！');
+    Sfx.play('roar'); addShake(10); G.flashT = .4;
+    en('binder', 2950, GB, { zs: 'sketch' }); en('floater', 3150, 380, { zs: 'ink' });
+    en('flyer', 3050, 320, { zs: 'paper' }); en('armored', 2680, GB, { zs: 'oil' });
   }
   if (p.dead) {
     G.deadT -= dt;
