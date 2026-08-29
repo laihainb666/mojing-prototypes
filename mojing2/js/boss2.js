@@ -20,6 +20,7 @@ function hitBoss(dmg, o) {
   const d = G.boss;
   if (!d || d.state === 'intro' || d.state === 'dying') return;
   let v = dmg;
+  if (G.dbg && G.dbg.ohk) v *= 50;
   if (d.mark > 0) v *= 2;
   d.hp -= v; d.flash = .1;
   addText(d.x + rnd(-20, 20), d.y - 60, Math.round(v), '#fff');
@@ -69,7 +70,7 @@ function updateBoss2(dt) {
       if (d.stT > 1.6) { d.state = 'hover'; d.stT = 0; d.atkCd = 1.2; }
       break;
     case 'hover': {
-      d.y = 285 + Math.sin(d.t * 1.5) * 26;
+      d.y = 515 + Math.sin(d.t * 1.5) * 20; /* 降到可攻击高度 */
       d.x = lerp(d.x, G.worldW - 470 + Math.sin(d.t * .4) * 130, .6 * dt);
       d.dir = p ? sgn(p.x - d.x) : -1;
       d.atkCd -= dt;
@@ -90,7 +91,7 @@ function updateBoss2(dt) {
       break;
     }
     case 'volley':
-      d.y = lerp(d.y, 270, 3 * dt);
+      d.y = lerp(d.y, 470, 3 * dt);
       if (d.stT > .5 && !d.fired) {
         d.fired = true;
         const n = d.phase >= 3 ? 5 : 3;
@@ -114,7 +115,7 @@ function updateBoss2(dt) {
       if (d.stT > 1) { d.state = 'hover'; d.fired = false; }
       break;
     case 'eraser':
-      d.y = lerp(d.y, 250, 3 * dt);
+      d.y = lerp(d.y, 400, 3 * dt);
       if (d.stT > .55 && !d.fired) {
         d.fired = true;
         spawnProj({ type: 'eraserWave', x: d.x + d.dir * 60, y: GB - 46, vx: d.dir * 300, vy: 0, dmg: 14, from: 'e', ttl: 5 });
@@ -133,7 +134,7 @@ function updateBoss2(dt) {
       if (d.hitCd <= 0 && p && dist(d.x, d.y, p.x, p.y - 26) < 64) { d.hitCd = .8; damagePlayer(16, d.x); }
       break;
     case 'rage':
-      d.y = 260 + Math.sin(d.t * 6) * 10;
+      d.y = 470 + Math.sin(d.t * 6) * 10;
       if (chance(.4)) burst(d.x + rnd(-90, 90), d.y + rnd(-50, 50), 3, { col: getStyle(d.style).pal.accent, s0: 3, s1: 8, sp1: 220 });
       if (d.stT > 1.5) { d.state = 'hover'; d.atkCd = .9; }
       break;
