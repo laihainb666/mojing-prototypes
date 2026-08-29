@@ -118,7 +118,7 @@ function updateDrawing(dt) {
   Mouse.wx = Mouse.x + G.cam.x; Mouse.wy = Mouse.y + G.cam.y;
   if (G.state !== 'play' || G.paused || G.helpOpen || G.dialog || !G.level || G.turn) { drawState = null; return; }
   const t = tool();
-  if (Mouse.down && t.draw && G.ink >= 1) {
+  if (Mouse.down && t.draw && (G.dbg.ink || G.ink >= 1)) {
     if (!drawState) {
       drawState = { pts: [{ x: Mouse.wx, y: Mouse.wy }], tool: t.key, col: t.col, lw: t.draw.lw, glow: !!t.draw.glow, noclip: !!t.draw.noclip, ttl: t.draw.ttl, brittle: !!t.draw.brittle, len: 0, lastX: Mouse.wx, lastY: Mouse.wy };
       Sfx.play('swing');
@@ -126,11 +126,11 @@ function updateDrawing(dt) {
       const d = dist(Mouse.wx, Mouse.wy, drawState.lastX, drawState.lastY);
       if (d > 8) {
         const cost = t.draw.cost * d / 10;
-        if (G.ink >= cost) {
+        if (G.dbg.ink || G.ink >= cost) {
           drawState.pts.push({ x: Mouse.wx, y: Mouse.wy });
           drawState.len += d;
           drawState.lastX = Mouse.wx; drawState.lastY = Mouse.wy;
-          G.ink -= cost;
+          if (!G.dbg.ink) G.ink -= cost;
         }
       }
     }
@@ -231,8 +231,8 @@ function doToolLight(p) {
 }
 function doToolHeavy(p) {
   const t = tool(), Hv = t.heavy;
-  if (G.ink < (Hv.cost || 0)) { Sfx.play('deny'); toast('墨量不足'); return; }
-  G.ink -= (Hv.cost || 0);
+  if (!G.dbg.ink && G.ink < (Hv.cost || 0)) { Sfx.play('deny'); toast('墨量不足'); return; }
+  if (!G.dbg.ink) G.ink -= (Hv.cost || 0);
   p.atkCd = Hv.cd; p.atkT = .26; p.swing++;
   const pal = getStyle(curStyle()).pal;
   switch (Hv.type) {
