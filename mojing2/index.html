@@ -14,14 +14,15 @@
 <body>
 <div id="wrap"><canvas id="cv" width="1280" height="720"></canvas></div>
 <div id="note">《墨境：千面残章 · 万具回廊》工具与关卡原型 —— 左键作画 · H 帮助 · M 离开关卡</div>
-<script src="js/core.js?v=14"></script>
-<script src="js/audio.js?v=14"></script>
-<script src="js/styles.js?v=14"></script>
-<script src="js/render.js?v=14"></script>
-<script src="js/tools.js?v=14"></script>
-<script src="js/entities.js?v=14"></script>
-<script src="js/levels.js?v=14"></script>
-<script src="js/boss2.js?v=14"></script>
-<script src="js/main2.js?v=14"></script>
+<script>
+/* 自动加载器：带时间戳避免缓存陈旧；file:// 下查询串会被忽略，双击仍可玩 */
+(function () {
+  var files = ['core', 'audio', 'styles', 'render', 'tools', 'entities', 'levels', 'boss2', 'main2'];
+  var t = Date.now();
+  for (var i = 0; i < files.length; i++) {
+    document.write('<script src="js/' + files[i] + '.js?t=' + t + '"><\/script>');
+  }
+})();
+</script>
 </body>
 </html>
