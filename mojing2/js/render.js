@@ -95,6 +95,8 @@ function drawWorld(ctx, cam) {
   }
   drawPlatforms(ctx, cam);
   drawStrokes(ctx, cam);
+  drawRoller(ctx, cam);
+  drawMud(ctx, cam);
   drawInter(ctx, cam);
   if (G.state !== 'title') drawHints(ctx, cam);
   for (const e of G.enemies) if (!e.dead && inView(e, cam)) drawEnemy(ctx, e);
@@ -226,6 +228,45 @@ function drawPlatforms(ctx, cam) {
       }
     }
   }
+}
+/* ---------- 印刷滚筒（5-35） ---------- */
+function drawRoller(ctx, cam) {
+  const R = G.roller;
+  if (!R || R.done) return;
+  if (R.x + R.w < cam.x - 100 || R.x > cam.x + W + 100) return;
+  const pal = getStyle('print').pal;
+  Paint.fill(ctx, c => roughRectPath(c, R.x, R.y, R.w, R.h, 4, 55, 20), pal.ground, {});
+  ctx.save();
+  ctx.beginPath(); ctx.rect(R.x + 2, R.y + 2, R.w - 4, R.h - 4); ctx.clip();
+  ctx.strokeStyle = '#f0e9d8'; ctx.lineWidth = 5;
+  const off = (G.t * 240) % 40;
+  for (let gx = R.x - 44 + off; gx < R.x + R.w + 40; gx += 40) {
+    ctx.beginPath(); ctx.moveTo(gx, R.y - 2); ctx.lineTo(gx - 16, R.y + R.h + 2); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.strokeStyle = pal.accent; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(R.x - 2, R.y + 4); ctx.lineTo(R.x - 2, R.y + R.h - 4); ctx.stroke();
+}
+/* ---------- 泥浆带（8-50） ---------- */
+function drawMud(ctx, cam) {
+  const M = G.mud;
+  if (!M) return;
+  if (M.x1 < cam.x - 60 || M.x0 > cam.x + W + 60) return;
+  ctx.save();
+  ctx.fillStyle = 'rgba(88,62,38,.32)';
+  ctx.beginPath();
+  ctx.moveTo(M.x0, 150);
+  for (let gx = M.x0; gx <= M.x1; gx += 60) ctx.quadraticCurveTo(gx + 30, 138 + Math.sin(gx / 90 + G.t) * 7, gx + 60, 150);
+  ctx.lineTo(M.x1, G.worldH);
+  ctx.lineTo(M.x0, G.worldH);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = 'rgba(60,42,24,.5)';
+  for (let gx = M.x0 + 20; gx < M.x1 - 10; gx += 90) {
+    const gy = 168 + Math.sin(G.t * 1.4 + gx) * 5;
+    ctx.beginPath(); ctx.ellipse(gx, gy, 15, 5, 0, 0, TAU); ctx.fill();
+  }
+  ctx.restore();
 }
 /* ---------- 玩家笔迹（画出的平台） ---------- */
 function drawStrokes(ctx, cam) {
@@ -388,6 +429,18 @@ function drawInter(ctx, cam) {
       const bob = Math.sin(G.t * 3) * 4;
       ctx.fillStyle = 'rgba(255,255,255,.85)';
       ctx.beginPath(); ctx.moveTo(it.x - 10, it.y - 250 + bob); ctx.lineTo(it.x, it.y - 264 + bob); ctx.lineTo(it.x + 10, it.y - 250 + bob); ctx.closePath(); ctx.fill();
+    } else if (it.type === 'lever') {
+      Paint.fill(ctx, c => roughRectPath(c, it.x - 14, it.y - 34, 28, 34, 3, it.x + 5, 12), shade(pal.plat, 6), {});
+      const ang = it.used ? -.7 : .7;
+      Paint.stroke(ctx, c => { c.beginPath(); c.moveTo(it.x, it.y - 30); c.lineTo(it.x + Math.sin(ang) * 30, it.y - 30 - Math.cos(ang) * 30); }, pal.accent, 5, {});
+      ctx.fillStyle = pal.accent;
+      ctx.beginPath(); ctx.arc(it.x + Math.sin(ang) * 30, it.y - 30 - Math.cos(ang) * 30, 6, 0, TAU); ctx.fill();
+      if (!it.used) {
+        ctx.textAlign = 'center'; setFont(ctx, 15, true);
+        ctx.fillStyle = 'rgba(40,36,30,.85)';
+        ctx.fillText('E — 翻面 · 滚筒启动', it.x, it.y - 78);
+        ctx.textAlign = 'left';
+      }
     } else if (it.type === 'seal') { /* 剪刀可剪的封印绳 */
       if (it.cut) continue;
       ctx.strokeStyle = '#c2352a'; ctx.lineWidth = 4;
