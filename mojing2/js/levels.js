@@ -325,6 +325,7 @@ function startLevel(def) {
   G.forcePixel = !!def.forcePixel;
   G.mechT = 0; G.mechFired = {}; G.clearT = 0;
   G.pixMix = 0;
+  G.boss = null; G.bossOn = false; G.bossDead = false; G.choiceDelay = 0;
   G.stats = { t: 0, kills: 0, deaths: G.stats.deaths || 0 };
   G.player = makePlayer();
   G.player.x = 140; G.player.y = GB - 4;
@@ -345,6 +346,7 @@ function clearLevel() {
   if (G.state !== 'play') return;
   G.state = 'clear'; G.clearT = 0;
   G.progress[G.level.id] = true;
+  saveProgress();
   Sfx.play('shrine');
   burst(G.player.x, G.player.y - 40, 24, { col: getStyle(G.level.style).pal.accent, s0: 3, s1: 9, sp1: 320, g: 200, drag: 2 });
 }
