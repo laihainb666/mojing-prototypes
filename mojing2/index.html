@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>墨境：千面残章 · 万具回廊 · 可玩原型</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f0d13;overflow:hidden}
+  #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  canvas{background:#000;box-shadow:0 0 70px rgba(0,0,0,.65);cursor:crosshair}
+  #note{position:fixed;left:12px;bottom:8px;color:#6a645a;font:12px/1.5 Consolas,monospace;opacity:.75;user-select:none}
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="cv" width="1280" height="720"></canvas></div>
+<div id="note">《墨境：千面残章 · 万具回廊》工具与关卡原型 —— 左键作画 · H 帮助 · M 离开关卡</div>
+<script src="js/core.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/styles.js"></script>
+<script src="js/render.js"></script>
+<script src="js/tools.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/boss2.js"></script>
+<script src="js/main2.js"></script>
+</body>
+</html>
