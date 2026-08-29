@@ -40,7 +40,9 @@ function updatePlayer(dt) {
   let mx = 0;
   if (In.down('left')) mx -= 1;
   if (In.down('right')) mx += 1;
-  let spd = 330 * (p.bindT > 0 ? .45 : 1);
+  p.slowT = (p.slowT || 0) - dt;
+  const mud = !!(G.mud && p.x > G.mud.x0 && p.x < G.mud.x1);
+  let spd = 330 * (p.bindT > 0 ? .45 : 1) * (p.slowT > 0 ? .6 : 1) * (mud ? .52 : 1);
   if (p.dashT > 0) {
     p.dashT -= dt;
     p.vx = p.dashDir * 640; p.vy = 0;
@@ -52,8 +54,9 @@ function updatePlayer(dt) {
     if (p.inLiquid) {
       p.vx = lerp(p.vx, mx * 210, 1 - Math.pow(.01, dt));
     } else {
-      p.vx = lerp(p.vx, mx * spd, 1 - Math.pow(.0001, dt));
-      if (!mx && p.onG) p.vx = lerp(p.vx, 0, 1 - Math.pow(.001, dt));
+    p.vx = lerp(p.vx, mx * spd, 1 - Math.pow(mud ? .08 : .0001, dt));
+    if (!mx && p.onG) p.vx = lerp(p.vx, 0, 1 - Math.pow(mud ? .3 : .001, dt));
+    if (mud && chance(.06)) spawnPart({ x: p.x - p.face * 8, y: p.y - 2, vx: rnd(-30, 30), vy: rnd(-50, -10), life: .5, size: rnd(2, 5), col: 'rgba(96,70,44,.7)' });
     }
     p.runT = Math.abs(p.vx) > 30 && p.onG ? p.runT + dt : 0;
     if (p.runT > .17) { p.runT = 0; spawnPart({ x: p.x - p.face * 10, y: p.y - 2, vx: -p.face * 40, vy: -30, life: .4, size: rnd(3, 6), col: 'rgba(120,115,100,.5)' }); }
@@ -72,11 +75,12 @@ function updatePlayer(dt) {
     if (In.down('jump')) p.vy = lerp(p.vy, -230, 4 * dt);
     if (In.down('down')) p.vy = lerp(p.vy, 230, 4 * dt);
   } else if (p.jbuf > 0) {
+    const jMul = mud ? .8 : 1;
     if (p.onG || p.coyote > 0) {
-      p.vy = -700 * g; p.onG = false; p.jumps = 1; p.jbuf = 0; p.coyote = 0;
+      p.vy = -700 * g * jMul; p.onG = false; p.jumps = 1; p.jbuf = 0; p.coyote = 0;
       Sfx.play('jump');
     } else if (p.jumps < 2) {
-      p.vy = -640 * g; p.jumps = 2; p.jbuf = 0;
+      p.vy = -640 * g * jMul; p.jumps = 2; p.jbuf = 0;
       Sfx.play('djump');
       burst(p.x, p.y - 10, 8, { col: 'rgba(255,255,255,.55)', s0: 2, s1: 5, sp1: 150 });
     }
@@ -110,7 +114,7 @@ function moveAndCollide(p, dt) {
   for (const pl of solidList()) {
     if (!aabb(box, pl)) continue;
     const feetGap = g > 0 ? p.y - pl.y : pl.y + pl.h - (p.y - p.h);
-    const stepAllow = pl.kind === 'dbx' ? 36 : 20; /* 画出的笔迹更容易踩上去 */
+    const stepAllow = pl.kind === 'dbx' ? 56 : 20; /* 画出的笔迹可以攀上去 */
     if (feetGap > 0 && feetGap <= stepAllow && p.vy * g >= 0) { if (g > 0) p.y = pl.y; else p.y = pl.y + pl.h + p.h; box = pbox(p); continue; }
     if (p.vx > 0) p.x = pl.x - p.w / 2; else if (p.vx < 0) p.x = pl.x + pl.w + p.w / 2;
     p.vx = 0; box = pbox(p);
@@ -193,6 +197,7 @@ function applyMelee(box, dmg, o) {
         G.platforms.splice(i, 1);
         burst(pl.x + pl.w / 2, pl.y + pl.h / 2, 20, { col: pl.gs === 'sketch' ? '#e8e4da' : '#a24a2c', type: pl.gs === 'sketch' ? 'rect' : 'chip', s0: 4, s1: 10, sp1: 320, g: 600 });
         toast('墙被打开了'); Sfx.play('boom'); addShake(5);
+        if (pl.reveal) spawnReveal(pl);
       }
     }
   }
