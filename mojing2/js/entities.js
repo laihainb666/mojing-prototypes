@@ -63,8 +63,9 @@ function updatePlayer(dt) {
   }
   /* 冲刺 */
   if (In.hit('dash') && p.dashCd <= 0 && p.bindT <= 0 && !p.inLiquid) {
-    if (G.ink >= 6) {
-      G.ink -= 6; p.dashT = .16; p.dashCd = .5; p.dashDir = mx || p.face;
+    if (G.dbg.ink || G.ink >= 6) {
+      if (!G.dbg.ink) G.ink -= 6;
+      p.dashT = .16; p.dashCd = .5; p.dashDir = mx || p.face;
       p.iframe = Math.max(p.iframe, .22);
       Sfx.play('dash');
     } else { Sfx.play('deny'); toast('墨量不足'); }
@@ -219,6 +220,7 @@ function damageEnemy(e, dmg, o) {
   if (e.dead || e.type === 'ally') return;
   if (e.hidden) { e.hidden = false; e.revealT = 3; }
   let d = dmg;
+  if (G.dbg && G.dbg.ohk) d *= 50;
   if (e.markT > 0) d *= 2;
   if (o.vsSketch && e.zs === 'sketch') d *= o.vsSketch;
   let knock = o.knock !== false && !e.cloneOf;
@@ -249,6 +251,7 @@ function killEnemy(e) {
 function damagePlayer(d, sx, opts = {}) {
   const p = G.player;
   if (!p || p.dead || p.iframe > 0 || p.dashT > 0 || G.state !== 'play') return;
+  if (G.dbg && G.dbg.inv) return;
   p.hp -= d; p.iframe = 1.1; G.hurtT = .3;
   p.vx = (p.x < sx ? -1 : 1) * 300; p.vy = -280 * G.grav; p.onG = false;
   addShake(7); Sfx.play('hurt');
