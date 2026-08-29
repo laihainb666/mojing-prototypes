@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>墨境：千面残章 · 可玩原型</title>
+<style>
+  html,body{margin:0;height:100%;background:#121016;overflow:hidden}
+  #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  canvas{background:#000;box-shadow:0 0 70px rgba(0,0,0,.65)}
+  #note{position:fixed;left:12px;bottom:8px;color:#6a645a;font:12px/1.5 Consolas,monospace;opacity:.75;user-select:none}
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="cv" width="1280" height="720"></canvas></div>
+<div id="note">《墨境：千面残章》画风侵蚀原型 —— H 查看操作 · M/B/L 调试跳转</div>
+<script src="js/core.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/styles.js"></script>
+<script src="js/render.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/world.js"></script>
+<script src="js/boss.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
